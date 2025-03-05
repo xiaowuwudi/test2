@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能聊天助手 - 撩妹神器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>智能聊天助手 💬</h1>
+    <textarea id="chat-input" placeholder="请粘贴对方的聊天内容..."></textarea>
+    
+    <div class="style-grid">
+        <!-- 第一行 -->
+        <div class="style-btn" data-style="高情商">高情商</div>
+        <div class="style-btn" data-style="撩女生">撩女生</div>
+        <div class="style-btn" data-style="幽默">幽默</div>
+        <!-- 第二行 -->
+        <div class="style-btn" data-style="贴心暖男">贴心暖男</div>
+        <div class="style-btn" data-style="情场高手">情场高手</div>
+        <div class="style-btn" data-style="成熟稳重">成熟稳重</div>
+        <!-- 第三行 -->
+        <div class="style-btn" data-style="温柔大叔">温柔大叔</div>
+        <div class="style-btn" data-style="暧昧拉扯">暧昧拉扯</div>
+        <div class="style-btn" data-style="逗比">逗比</div>
+    </div>
+
+    <button id="generate-btn">生成神回复</button>
+
+    <div id="result-container"></div>
+
+    <script>
+        const API_KEY = 'sk-fegrphpfouumnomwsqolzpsezlicvogqaautkvsjjwqhfrlf';
+        let selectedStyle = null;
+
+        // 风格选择逻辑
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedStyle = btn.dataset.style;
+            });
+        });
+
+        // 生成回复逻辑
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const inputText = document.getElementById('chat-input').value.trim();
+            if (!inputText || !selectedStyle) {
+                alert('请先输入聊天内容并选择风格！');
+                return;
+            }
+
+            const btn = document.getElementById('generate-btn');
+            btn.disabled = true;
+            btn.innerHTML = '生成中<span class="loading-dots"></span>';
+
+            try {
+                const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-ai/DeepSeek-V2.5",
+                        messages: [{
+                            role: "user",
+                            content: `请用${selectedStyle}风格回复以下内容，生成3条不同回复：${inputText}`
+                        }],
+                        temperature: 0.7,
+                        n: 3
+                    })
+                });
+
+                const data = await response.json();
+                showResults(data.choices);
+            } catch (error) {
+                alert('生成失败，请稍后重试');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '生成神回复';
+            }
+        });
+
+        // 显示结果
+        function showResults(choices) {
+            const container = document.getElementById('result-container');
+            container.innerHTML = choices.map((choice, index) => `
+                <div class="result-item">
+                    <div class="result-style">${selectedStyle}方案 ${index + 1}</div>
+                    <div class="result-content">${choice.message.content}</div>
+                    <button class="copy-btn" onclick="copyText(this)">复制</button>
+                </div>
+            `).join('');
+        }
+
+        // 复制功能
+        window.copyText = function(button) {
+            const text = button.previousElementSibling.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = '已复制！';
+                setTimeout(() => button.textContent = '复制', 2000);
+            });
+        }
+    </script>
+</body>
+</html>
